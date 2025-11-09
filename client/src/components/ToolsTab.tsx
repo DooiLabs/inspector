@@ -38,6 +38,7 @@ import { useEffect, useState, useRef } from "react";
 import ListPane from "./ListPane";
 import JsonView from "./JsonView";
 import ToolResults from "./ToolResults";
+import WidgetRenderer from "./WidgetRenderer";
 import { useToast } from "@/lib/hooks/useToast";
 import useCopy from "@/lib/hooks/useCopy";
 
@@ -115,6 +116,23 @@ const ToolsTab = ({
     formRefs.current = {};
   }, [selectedTool]);
 
+  // Extract widget metadata if present
+  const widgetMeta =
+    toolResult && "content" in toolResult
+      ? (toolResult._meta?.["openai.com/widget"] as
+          | {
+              resource?: {
+                text?: string;
+                title?: string;
+                uri?: string;
+              };
+            }
+          | undefined)
+      : undefined;
+  const widgetHtml = widgetMeta?.resource?.text;
+  const widgetTitle = widgetMeta?.resource?.title;
+  const widgetUri = widgetMeta?.resource?.uri;
+
   return (
     <TabsContent value="tools">
       <div className="grid grid-cols-2 gap-4">
@@ -145,7 +163,7 @@ const ToolsTab = ({
               {selectedTool ? selectedTool.name : "Select a tool"}
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-4 max-h-[600px] overflow-y-auto">
             {selectedTool ? (
               <div className="space-y-4">
                 {error && (
@@ -536,6 +554,16 @@ const ToolsTab = ({
           </div>
         </div>
       </div>
+
+      {widgetHtml && (
+        <div className="mt-4">
+          <WidgetRenderer
+            widgetHtml={widgetHtml}
+            widgetTitle={widgetTitle}
+            widgetUri={widgetUri}
+          />
+        </div>
+      )}
     </TabsContent>
   );
 };
